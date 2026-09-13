@@ -1,0 +1,10 @@
+# CloudFormationTemplateVersion
+# Description
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation Template for Black Arrow S3 Bucket'
+Resources: 
+  S3Bucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: 'blackarrow-s3-bucket-master'
