@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation Template for Black Arrow VPC.'
+
+Resources:
+# Company VPC Footprint
+  BlackArrowVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: '172.16.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: 'blackarrow-vpc'
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  PublicSubnet1A:
+  #Company Public Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.1.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1A
+          Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  AppPrivateSubnet1A:
+  #Company App Private Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.2.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: AppPrivateSubnet1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  DataPrivateSubnet1A:
+  #Company Data Private Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.3.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: DataPrivateSubnet1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  PublicSubnet2A:
+  #Company Public Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.4.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  AppPrivateSubnet2A:
+  #Company App Private Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.5.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: AppPrivateSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  DataPrivateSubnet2A:
+  #Company Data Private Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.6.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: DataPrivateSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  #Internet Gateway
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: blackarrow-igw
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  AttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  #Route Tables
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'  
+
+  #Public Routes
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  #Subnet Associations
+  PublicSubnet1AAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet1A
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2AAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet2A
+      RouteTableId: !Ref PublicRouteTable
