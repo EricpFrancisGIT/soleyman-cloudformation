@@ -26,7 +26,7 @@ Resources:
       Tags:
         - Key: Name
           Value: PublicSubnet1A
-          Key: Text
+        - Key: Text
           Value: 'Created via Custom CloudFormation Template'
 
   AppPrivateSubnet1A:
@@ -143,3 +143,100 @@ Resources:
     Properties:
       SubnetId: !Ref PublicSubnet2A
       RouteTableId: !Ref PublicRouteTable
+  
+  #Bastion Host EC2
+  BastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: SoleymanBastion
+      ImageId: ami-0354c98ae10b02961
+      SubnetId: !Ref PublicSubnet1A
+      SecurityGroupIds:
+        - !Ref BastionSG
+      Tags:
+        - Key: Name
+          Value: BastionHost
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  # Bastion Security Group
+  BastionSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Bastion security group
+      VpcId: !Ref BlackArrowVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: BastionSG
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  AppInstance1A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: SoleymanBastion
+      ImageId: ami-0354c98ae10b02961
+      SubnetId: !Ref AppPrivateSubnet1A
+      SecurityGroupIds:
+        - !Ref AppInstance1ASG 
+      Tags:
+        - Key: Name
+          Value: AppInstance1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+          
+  AppInstance2A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: t2.micro
+      KeyName: SoleymanBastion
+      ImageId: ami-0354c98ae10b02961
+      SubnetId: !Ref AppPrivateSubnet2A
+      SecurityGroupIds:
+        - !Ref AppInstance2ASG 
+      Tags:
+        - Key: Name
+          Value: AppInstance2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  # App Security Groups
+  AppInstance1ASG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Allow SSH From Bastion'
+      VpcId: !Ref BlackArrowVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: AppInstance1ASG
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+
+  AppInstance2ASG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Allow ICMP Ping from App1'
+      VpcId: !Ref BlackArrowVPC
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          SourceSecurityGroupId: !Ref AppInstance1ASG
+      Tags:
+        - Key: Name
+          Value: AppInstance2ASG
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
