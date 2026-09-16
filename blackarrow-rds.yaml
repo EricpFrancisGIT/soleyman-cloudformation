@@ -1,0 +1,15 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: CloudFormation template for provisioning a Blackarrow RDS Database Instance.
+
+Resources:
+  BlackarrowRDSDB:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: "blackarrow-rds-db"
+      AllocatedStorage: "20"
+      DBInstanceClass: "db.t3.micro"
+      Engine: "mysql"
+      EngineVersion: '8.4.9'    
+      MasterUsername: "admin"
+      MasterUserPassword: "password"
+      BackupRetentionPeriod: 7
