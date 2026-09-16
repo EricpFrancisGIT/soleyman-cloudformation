@@ -1,0 +1,282 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation Template for Black Arrow VPC.'
+
+Resources:
+# Company VPC Footprint
+  BlackArrowVPC:
+    Type: 'AWS::EC2::VPC'
+    Properties:
+      CidrBlock: '172.16.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: 'blackarrow-vpc'
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  PublicSubnet1A:
+  #Company Public Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.1.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  AppPrivateSubnet1A:
+  #Company App Private Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.2.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: AppPrivateSubnet1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  DataPrivateSubnet1A:
+  #Company Data Private Subnet in AZ1
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.3.0/24'
+      AvailabilityZone: !Select [ 0, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: DataPrivateSubnet1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  PublicSubnet2A:
+  #Company Public Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.4.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  AppPrivateSubnet2A:
+  #Company App Private Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.5.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: AppPrivateSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  DataPrivateSubnet2A:
+  #Company Data Private Subnet in AZ2
+    Type: 'AWS::EC2::Subnet'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      CidrBlock: '172.16.6.0/24'
+      AvailabilityZone: !Select [ 1, !GetAZs '' ]
+      Tags:
+        - Key: Name
+          Value: DataPrivateSubnet2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  #Internet Gateway
+  InternetGateway:
+    Type: 'AWS::EC2::InternetGateway'
+    Properties:
+      Tags:
+        - Key: Name
+          Value: blackarrow-igw
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  AttachGateway:
+    Type: 'AWS::EC2::VPCGatewayAttachment'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  #Route Tables
+  PublicRouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      Tags:
+        - Key: Name
+          Value: PublicRouteTable
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  #Public Routes
+  PublicRoute:
+    Type: 'AWS::EC2::Route'
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  #Subnet Associations
+  PublicSubnet1AAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet1A
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2AAssociation:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref PublicSubnet2A
+      RouteTableId: !Ref PublicRouteTable
+
+  #BlackArrow Application Loadbalancer
+
+  BlackArrowALB:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Subnets:
+        - !Ref PublicSubnet1A
+        - !Ref PublicSubnet2A
+      SecurityGroups:
+        - !Ref BlackArrowWebServerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: BlackArrowALB
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+  
+  #BlackArrow Target Group for Application Load Balancer
+  BlackArrowTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      VpcId: !Ref BlackArrowVPC
+      Port: 80
+      Protocol: 'HTTP'
+      Targets:
+        - Id: !Ref BlackArrowWebServerInstance1A
+        - Id: !Ref BlackArrowWebServerInstance2A
+      Tags:
+        - Key: Name
+          Value: BlackArrowTargetGroup
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+  
+  #BlackArrow Listener for Application Load Balancer
+  BlackArrowListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      LoadBalancerArn: !Ref BlackArrowALB
+      DefaultActions:
+        - Type: 'forward'
+          TargetGroupArn: !Ref BlackArrowTargetGroup
+      Port: 80
+      Protocol: 'HTTP'
+
+  # BlackArrow Web Server / Application Load Balancer Security Group
+  BlackArrowWebServerSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Security group for BlackArrow Web Server and ALB
+      VpcId: !Ref BlackArrowVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: BlackArrowWebServerSecurityGroup
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+
+  #BlackArrow Web Server Instance 
+  BlackArrowWebServerInstance1A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't3.micro'
+      ImageId: 'ami-09f2f3eeb95b394f2'
+      SubnetId: !Ref PublicSubnet1A
+      SecurityGroupIds:
+        - !Ref BlackArrowWebServerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: BlackArrowWebServerInstance1A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Greetings from BlackArrow Web Server Instance 1A</h1>" > /var/www/html/index.html
+
+   #BlackArrow Web Server Instance 
+  BlackArrowWebServerInstance2A:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: 't3.micro'
+      ImageId: 'ami-09f2f3eeb95b394f2'
+      SubnetId: !Ref PublicSubnet2A
+      SecurityGroupIds:
+        - !Ref BlackArrowWebServerSecurityGroup
+      Tags:
+        - Key: Name
+          Value: BlackArrowWebServerInstance2A
+        - Key: Text
+          Value: 'Created via Custom CloudFormation Template'
+        - Key: Owner
+          Value: Eric Francis-Chief Architect/Lead DevOps Engineer
+      UserData: 
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd
+          systemctl start httpd
+          systemctl enable httpd
+          echo "<h1>Greetings from BlackArrow Web Server Instance 2A</h1>" > /var/www/html/index.html
